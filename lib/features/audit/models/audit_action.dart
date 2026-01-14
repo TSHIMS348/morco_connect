@@ -1,0 +1,17 @@
+enum AuditAction {
+  login,
+  logout,
+  otpValidated,
+  otpFailed,
+  profileUpdated,
+  userValidated,
+  sessionExpired,
+  permissionDenied,
+  projectCreated,
+  projectMemberAdded,
+  projectMemberRemoved,
+  announcementSubmitted,
+  announcementPublished,
+  announcementScheduled,
+  announcementRejected,
+}
