@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/services/auth_session.dart';
-import '../models/announcement.dart';
+import '../../users/services/user_directory_service.dart';
+
 import '../models/announcement_status.dart';
 import '../services/announcement_service.dart';
 
@@ -17,43 +18,71 @@ class AdminAnnouncementsDashboardPage extends StatelessWidget {
       );
     }
 
+    final users = UserDirectoryService.getAll(activeOnly: true);
     final all = AnnouncementService.getAllCached();
 
     // =============================
-    // 📊 Agrégations
+    // 📊 Agrégations ÉTAT
     // =============================
-    final total = all.length;
-    final drafts =
+    final int total = all.length;
+    final int drafts =
         all.where((a) => a.status == AnnouncementStatus.draft).length;
-    final pending =
+    final int pending =
         all.where((a) => a.status == AnnouncementStatus.pendingValidation).length;
-    final scheduled =
+    final int scheduled =
         all.where((a) => a.status == AnnouncementStatus.scheduled).length;
-    final published =
+    final int published =
         all.where((a) => a.status == AnnouncementStatus.published).length;
 
-    // Impact global (sur publiées uniquement)
+    // =============================
+    // 📊 Impact global (publiées)
+    // =============================
     int totalTargets = 0;
     int totalRead = 0;
 
-    for (final a in all.where((x) => x.status == AnnouncementStatus.published)) {
-      final stats = AnnouncementService.getReadStats(a);
-      totalTargets += stats.total;
-      totalRead += stats.read;
+    final publishedAnnouncements =
+        all.where((a) => a.status == AnnouncementStatus.published);
+
+    for (final a in publishedAnnouncements) {
+      final targets =
+          AnnouncementService.getTargetMatricules(a).toSet();
+      final readers = a.readBy.toSet();
+
+      for (final u in users) {
+        if (!targets.contains(u.matricule)) continue;
+        totalTargets++;
+        if (readers.contains(u.matricule)) {
+          totalRead++;
+        }
+      }
     }
 
-    final unread = totalTargets - totalRead;
-    final rate =
-        totalTargets == 0 ? 0 : ((totalRead / totalTargets) * 100).round();
+    final int unread = totalTargets - totalRead;
+    final int rate = totalTargets == 0
+        ? 0
+        : ((totalRead / totalTargets) * 100).round();
 
-    // Annonces à faible impact (<50%)
-    final lowImpact = all
-        .where((a) => a.status == AnnouncementStatus.published)
-        .where((a) {
-          final s = AnnouncementService.getReadStats(a);
-          return s.total > 0 && (s.read / s.total) < 0.5;
-        })
-        .toList();
+    // =============================
+    // ⚠️ Annonces à faible impact
+    // =============================
+    final lowImpact = publishedAnnouncements.where((a) {
+      int t = 0;
+      int r = 0;
+
+      final targets =
+          AnnouncementService.getTargetMatricules(a).toSet();
+      final readers = a.readBy.toSet();
+
+      for (final u in users) {
+        if (!targets.contains(u.matricule)) continue;
+        t++;
+        if (readers.contains(u.matricule)) {
+          r++;
+        }
+      }
+
+      return t > 0 && (r / t) < 0.5;
+    }).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -65,7 +94,7 @@ class AdminAnnouncementsDashboardPage extends StatelessWidget {
           // =============================
           // KPI — ÉTAT
           // =============================
-          _Section(title: 'État des annonces'),
+          const _Section(title: 'État des annonces'),
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -83,7 +112,7 @@ class AdminAnnouncementsDashboardPage extends StatelessWidget {
           // =============================
           // KPI — IMPACT
           // =============================
-          _Section(title: 'Impact global'),
+          const _Section(title: 'Impact global'),
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -104,32 +133,42 @@ class AdminAnnouncementsDashboardPage extends StatelessWidget {
           // =============================
           // ⚠️ À SURVEILLER
           // =============================
-          _Section(title: 'Annonces à faible impact'),
+          const _Section(title: 'Annonces à faible impact'),
           if (lowImpact.isEmpty)
             const Text('✅ Toutes les annonces ont un bon taux de lecture.')
           else
-            ...lowImpact.map(
-              (a) {
-                final s = AnnouncementService.getReadStats(a);
-                final p =
-                    s.total == 0 ? 0 : ((s.read / s.total) * 100).round();
+            ...lowImpact.map((a) {
+              int t = 0;
+              int r = 0;
 
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.warning, color: Colors.orange),
-                  title: Text(a.title),
-                  subtitle:
-                      Text('Lecture : $p% (${s.read}/${s.total})'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.of(context).pushNamed(
-                      '/admin/announcements/detail',
-                      arguments: a.id,
-                    );
-                  },
-                );
-              },
-            ),
+              final targets =
+                  AnnouncementService.getTargetMatricules(a).toSet();
+              final readers = a.readBy.toSet();
+
+              for (final u in users) {
+                if (!targets.contains(u.matricule)) continue;
+                t++;
+                if (readers.contains(u.matricule)) {
+                  r++;
+                }
+              }
+
+              final int p = t == 0 ? 0 : ((r / t) * 100).round();
+
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.warning, color: Colors.orange),
+                title: Text(a.title),
+                subtitle: Text('Lecture : $p% ($r/$t)'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.of(context).pushNamed(
+                    '/admin/announcements/detail',
+                    arguments: a.id,
+                  );
+                },
+              );
+            }),
         ],
       ),
     );
@@ -177,8 +216,8 @@ class _KpiCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         color: highlight
-            ? Colors.red.withOpacity(0.08)
-            : Colors.black.withOpacity(0.04),
+            ? Colors.red.withValues(alpha: 0.08)
+            : Colors.black.withValues(alpha: 0.04),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
