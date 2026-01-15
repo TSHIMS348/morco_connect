@@ -17,7 +17,7 @@ class AdminAnnouncementImpactByTargetPage extends StatefulWidget {
 class _AdminAnnouncementImpactByTargetPageState
     extends State<AdminAnnouncementImpactByTargetPage>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  late final TabController _tabController;
 
   @override
   void initState() {
@@ -59,9 +59,9 @@ class _AdminAnnouncementImpactByTargetPageState
 
 enum _TargetType { site, city, project }
 
-// ======================================================
-// 🔎 Calcul + affichage impact par cible
-// ======================================================
+/// ======================================================
+/// 🔎 Calcul + affichage impact par cible
+/// ======================================================
 class _ImpactByTarget extends StatelessWidget {
   final _TargetType type;
   const _ImpactByTarget({required this.type});
@@ -70,21 +70,19 @@ class _ImpactByTarget extends StatelessWidget {
   Widget build(BuildContext context) {
     final users = UserDirectoryService.getAll(activeOnly: true);
 
-    // Annonces publiées uniquement
     final published = AnnouncementService.getAllCached()
         .where((a) => a.status == AnnouncementStatus.published)
         .toList();
 
-    // Map: target -> {total, read}
     final Map<String, _ImpactStats> map = {};
 
     for (final a in published) {
-      final stats = AnnouncementService.getReadStats(a);
-      final targets = AnnouncementService.getTargetMatricules(a).toSet();
+      final targets =
+          AnnouncementService.getTargetMatricules(a).toSet();
       final readers = a.readBy.toSet();
 
       for (final u in users) {
-        final key = _keyForUser(u);
+        final String key = _keyForUser(u);
 
         if (!targets.contains(u.matricule)) continue;
 
@@ -110,11 +108,12 @@ class _ImpactByTarget extends StatelessWidget {
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (_, i) {
         final e = entries[i];
-        final rate = e.value.total == 0
-            ? 0
-            : (e.value.read / e.value.total * 100).round();
 
-        Color color;
+        final int rate = e.value.total == 0
+            ? 0
+            : ((e.value.read / e.value.total) * 100).round();
+
+        final Color color;
         if (rate < 30) {
           color = Colors.red;
         } else if (rate < 50) {
@@ -134,7 +133,7 @@ class _ImpactByTarget extends StatelessWidget {
     );
   }
 
-  String _keyForUser(user) {
+  String _keyForUser(dynamic user) {
     switch (type) {
       case _TargetType.site:
         return user.site ?? '—';
@@ -146,9 +145,9 @@ class _ImpactByTarget extends StatelessWidget {
   }
 }
 
-// ======================================================
-// 📊 Stats internes
-// ======================================================
+/// ======================================================
+/// 📊 Stats internes
+/// ======================================================
 class _ImpactStats {
   int total = 0;
   int read = 0;
