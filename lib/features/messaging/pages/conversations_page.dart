@@ -41,8 +41,8 @@ class _ConversationsPageState extends State<ConversationsPage> {
     final isAdmin = AuthSession.isAdmin;
 
     final list = isAdmin
-        ? await ConversationService.getAll()
-        : await ConversationService.getForCurrentUser();
+        ? ConversationService.getAll()
+        : ConversationService.getForCurrentUser();
 
     if (!mounted) return;
 

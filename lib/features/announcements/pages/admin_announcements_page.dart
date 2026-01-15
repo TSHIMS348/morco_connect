@@ -300,7 +300,7 @@ class _PriorityFilter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<AnnouncementPriority?>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         labelText: 'Priorité',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

@@ -10,9 +10,6 @@ import '../services/announcement_service.dart';
 
 /// =====================================================
 /// 📢 PAGE DÉTAIL ANNONCE
-/// - Lecture complète
-/// - Marquage lu automatique
-/// - Impact post-publication (B11.6 – ADMIN)
 /// =====================================================
 class AnnouncementDetailPage extends StatefulWidget {
   final String announcementId;
@@ -37,7 +34,8 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
 
     // 🔁 publication différée
     AnnouncementService.processScheduled().then((_) {
-      if (mounted) _load();
+      if (!mounted) return;
+      _load();
     });
   }
 
@@ -84,9 +82,7 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // =============================
           // 🏷️ HEADER
-          // =============================
           Text(
             a.title,
             style: const TextStyle(
@@ -104,16 +100,16 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
               _InfoChip(text: 'Auteur : ${a.authorMatricule}'),
               _InfoChip(
                 text:
-                    'Créée le ${a.createdAt.day.toString().padLeft(2, '0')}/${a.createdAt.month.toString().padLeft(2, '0')}/${a.createdAt.year}',
+                    'Créée le ${a.createdAt.day.toString().padLeft(2, '0')}/'
+                    '${a.createdAt.month.toString().padLeft(2, '0')}/'
+                    '${a.createdAt.year}',
               ),
             ],
           ),
 
           const Divider(height: 32),
 
-          // =============================
           // 📝 CONTENU
-          // =============================
           if ((a.body ?? '').trim().isNotEmpty)
             Text(
               a.body!.trim(),
@@ -124,12 +120,8 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
 
           const SizedBox(height: 24),
 
-          // =============================
-          // 📊 B11.6 — IMPACT (ADMIN)
-          // =============================
-          _ImpactBlock(
-            announcement: a,
-          ),
+          // 📊 IMPACT (ADMIN)
+          _ImpactBlock(announcement: a),
         ],
       ),
     );
@@ -137,7 +129,7 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
 }
 
 // ======================================================
-// 📊 B11.6 — Impact post-publication
+// 📊 Impact post-publication
 // ======================================================
 class _ImpactBlock extends StatelessWidget {
   final Announcement announcement;
@@ -155,9 +147,6 @@ class _ImpactBlock extends StatelessWidget {
       );
     }
 
-    // =============================
-    // 🔢 Calcul impact
-    // =============================
     final users = UserDirectoryService.getAll(activeOnly: true);
 
     final targeted = users.where((u) {
@@ -172,15 +161,14 @@ class _ImpactBlock extends StatelessWidget {
           case AnnouncementTargetType.city:
             return u.city == t.refId;
           case AnnouncementTargetType.project:
-            return false; // pas dispo ici
+            return false;
         }
       });
     }).toList();
 
     final total = targeted.length;
-    final read = targeted
-        .where((u) => announcement.readBy.contains(u.matricule))
-        .length;
+    final read =
+        targeted.where((u) => announcement.readBy.contains(u.matricule)).length;
     final unread = total - read;
     final rate = total == 0 ? 0.0 : read / total;
     final percent = (rate * 100).round();

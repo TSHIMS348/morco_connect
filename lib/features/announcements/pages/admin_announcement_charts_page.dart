@@ -170,10 +170,8 @@ class _BarChartByTarget extends StatelessWidget {
           AnnouncementService.getTargetMatricules(a).toSet();
 
       for (final u in users) {
-        final String? key =
+        final String key =
             type == _Target.site ? u.site : u.city;
-
-        if (key == null) continue;
         if (!targets.contains(u.matricule)) continue;
 
         map.putIfAbsent(key, () => _Stats());
