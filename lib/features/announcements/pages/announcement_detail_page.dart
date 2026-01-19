@@ -42,18 +42,19 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
   void _load() {
     final all = AnnouncementService.getAllCached();
 
-    final a = all.firstWhere(
+    final announcement = all.firstWhere(
       (x) => x.id == widget.announcementId,
       orElse: () => throw Exception('Annonce introuvable'),
     );
 
-    setState(() => _announcement = a);
+    setState(() => _announcement = announcement);
 
     // 👁️ marquer comme lu
     final me = AuthSession.currentUser;
-    if (me != null && a.status == AnnouncementStatus.published) {
+    if (me != null &&
+        announcement.status == AnnouncementStatus.published) {
       AnnouncementService.markAsRead(
-        announcementId: a.id,
+        announcementId: announcement.id,
         readerMatricule: me.matricule,
       );
     }
@@ -138,7 +139,9 @@ class _ImpactBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!AuthSession.isAdmin) return const SizedBox.shrink();
+    if (!AuthSession.isAdmin) {
+      return const SizedBox.shrink();
+    }
 
     if (announcement.status != AnnouncementStatus.published) {
       return _infoBox(
@@ -167,8 +170,9 @@ class _ImpactBlock extends StatelessWidget {
     }).toList();
 
     final total = targeted.length;
-    final read =
-        targeted.where((u) => announcement.readBy.contains(u.matricule)).length;
+    final read = targeted
+        .where((u) => announcement.readBy.contains(u.matricule))
+        .length;
     final unread = total - read;
     final rate = total == 0 ? 0.0 : read / total;
     final percent = (rate * 100).round();
@@ -177,7 +181,7 @@ class _ImpactBlock extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: Colors.green.withOpacity(0.07),
+        color: Colors.green.withValues(alpha: 0.07),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +222,7 @@ class _ImpactBlock extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
       ),
       child: Text(
         text,
@@ -260,12 +264,15 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.06),
+        color: Colors.black.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
@@ -283,7 +290,7 @@ class _Kpi extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: Colors.black.withOpacity(0.04),
+        color: Colors.black.withValues(alpha: 0.04),
       ),
       child: Text(
         '$label : $value',
