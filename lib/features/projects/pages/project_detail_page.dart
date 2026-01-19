@@ -4,7 +4,7 @@ import '../../auth/services/auth_session.dart';
 import '../../auth/services/permission_service.dart';
 import '../../users/models/system_user.dart';
 import '../../users/services/user_directory_service.dart';
-import '../../messaging/pages/chat_page.dart'; // 🟢 NOUVEAU : accès au chat projet
+import '../../messaging/pages/chat_page.dart';
 import '../models/project.dart';
 import '../services/project_service.dart';
 
@@ -71,8 +71,13 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     }
 
     if (invalid.isNotEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Matricules introuvables: ${invalid.join(", ")}')),
+        SnackBar(
+          content: Text(
+            'Matricules introuvables: ${invalid.join(", ")}',
+          ),
+        ),
       );
       return;
     }
@@ -88,6 +93,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
 
     _csvCtrl.clear();
     _reload();
+
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Membres ajoutés')),
@@ -109,18 +116,16 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
       ),
     );
 
-    if (picked == null) return;
+    if (!mounted || picked == null) return;
 
     final current = p.members.toSet();
 
-    // ajout
     for (final m in picked.difference(current)) {
       try {
         ProjectService.addMember(projectId: p.id, matricule: m);
       } catch (_) {}
     }
 
-    // retrait
     for (final m in current.difference(picked)) {
       try {
         ProjectService.removeMember(projectId: p.id, matricule: m);
@@ -128,6 +133,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     }
 
     _reload();
+
+    if (!mounted) return;
     Navigator.of(context).pop(true);
   }
 
@@ -151,9 +158,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(p.name),
-
-        // 🟢 NOUVEAU : bouton "Discuter"
-        // Ouvre directement la messagerie du projet
         actions: [
           IconButton(
             icon: const Icon(Icons.chat),
@@ -163,7 +167,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                 context,
                 MaterialPageRoute(
                   builder: (_) => ChatPage(
-                    conversationId: 'PRJ:${p.id}', // 🔑 clé unique projet
+                    conversationId: 'PRJ:${p.id}',
                   ),
                 ),
               );
@@ -171,7 +175,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
           ),
         ],
       ),
-
       floatingActionButton: _canManage
           ? FloatingActionButton.extended(
               onPressed: _openPicker,
@@ -179,7 +182,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
               label: const Text('Gérer membres'),
             )
           : null,
-
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
@@ -214,15 +216,12 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-
             const Text(
               'Membres',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-
             Card(
               child: Column(
                 children: users.map((u) {
@@ -233,13 +232,15 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                     subtitle: Text('${u.site} • ${u.city} • ${u.role.name}'),
                     trailing: (_canManage && !isOwner)
                         ? IconButton(
-                            icon: const Icon(Icons.remove_circle_outline),
+                            icon:
+                                const Icon(Icons.remove_circle_outline),
                             onPressed: () {
                               ProjectService.removeMember(
                                 projectId: p.id,
                                 matricule: u.matricule,
                               );
                               _reload();
+                              if (!mounted) return;
                               Navigator.of(context).pop(true);
                             },
                           )
@@ -248,7 +249,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                 }).toList(),
               ),
             ),
-
             if (_canManage) ...[
               const SizedBox(height: 20),
               TextFormField(
@@ -266,120 +266,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                 label: const Text('Ajouter depuis le champ'),
               ),
             ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/* ============================================================
- * 🔽 FEUILLE DE SÉLECTION DES UTILISATEURS (inchangée)
- * ============================================================ */
-
-class _UserPickerSheet extends StatefulWidget {
-  final Set<String> initiallySelected;
-  final String ownerMatricule;
-
-  const _UserPickerSheet({
-    required this.initiallySelected,
-    required this.ownerMatricule,
-  });
-
-  @override
-  State<_UserPickerSheet> createState() => _UserPickerSheetState();
-}
-
-class _UserPickerSheetState extends State<_UserPickerSheet> {
-  final _searchCtrl = TextEditingController();
-  late Set<String> _selected;
-  List<SystemUser> _results = const [];
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = {...widget.initiallySelected};
-    _results = UserDirectoryService.getAll(activeOnly: true);
-    _searchCtrl.addListener(_onSearch);
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.removeListener(_onSearch);
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  void _onSearch() {
-    setState(() {
-      _results = UserDirectoryService.search(_searchCtrl.text);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: bottom + 16,
-      ),
-      child: SizedBox(
-        height: 520,
-        child: Column(
-          children: [
-            const Text(
-              'Gérer les membres',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _searchCtrl,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Rechercher',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: ListView.separated(
-                itemCount: _results.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (_, i) {
-                  final u = _results[i];
-                  final checked = _selected.contains(u.matricule);
-
-                  return CheckboxListTile(
-                    value: checked,
-                    onChanged: (v) {
-                      setState(() {
-                        if (v == true) {
-                          _selected.add(u.matricule);
-                        } else {
-                          if (u.matricule == widget.ownerMatricule) return;
-                          _selected.remove(u.matricule);
-                        }
-                      });
-                    },
-                    title: Text('${u.fullName} (${u.matricule})'),
-                    subtitle: Text('${u.site} • ${u.city} • ${u.role.name}'),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              height: 46,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context, _selected),
-                child: Text('Valider (${_selected.length})'),
-              ),
-            ),
           ],
         ),
       ),

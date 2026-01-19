@@ -49,6 +49,7 @@ class _StartChatPageState extends State<StartChatPage> {
 
     // 🔐 Sécurité : pas de chat avec soi-même
     if (other.matricule == me) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Vous ne pouvez pas vous écrire à vous-même'),
@@ -57,7 +58,6 @@ class _StartChatPageState extends State<StartChatPage> {
       return;
     }
 
-    // ✅ CORRECTION CLÉ : await obligatoire
     final conv = await ConversationService.createDirect(
       otherMatricule: other.matricule,
       otherName: other.fullName,
@@ -66,14 +66,11 @@ class _StartChatPageState extends State<StartChatPage> {
     if (!mounted) return;
 
     // 🔁 Ouvre directement la page de chat
-    await Navigator.of(context).pushReplacement(
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => ChatPage(conversationId: conv.id),
       ),
     );
-
-    // 🔙 Informe la page précédente qu’une conversation a été créée
-    Navigator.of(context).pop(true);
   }
 
   @override
