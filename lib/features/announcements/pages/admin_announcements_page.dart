@@ -11,7 +11,6 @@ import '../services/announcement_service.dart';
 
 import 'announcement_detail_page.dart';
 
-
 class AdminAnnouncementsPage extends StatefulWidget {
   const AdminAnnouncementsPage({super.key});
 
@@ -76,6 +75,10 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage>
             onPressed: () async {
               await Navigator.of(context)
                   .pushNamed('/admin/announcements/create');
+
+              // ✅ Protection après await
+              if (!mounted) return;
+
               setState(() {});
             },
           ),
@@ -83,7 +86,6 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage>
 
         // 🔎 Recherche + filtres + tabs
         bottom: PreferredSize(
-          // ✅ 112 était trop petit (Search + filtres + TabBar)
           preferredSize: const Size.fromHeight(160),
           child: Column(
             children: [
@@ -110,11 +112,14 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage>
                       tooltip: _sortNewestFirst
                           ? 'Tri : plus récent'
                           : 'Tri : plus ancien',
-                      icon: Icon(_sortNewestFirst
-                          ? Icons.arrow_downward
-                          : Icons.arrow_upward),
-                      onPressed: () =>
-                          setState(() => _sortNewestFirst = !_sortNewestFirst),
+                      icon: Icon(
+                        _sortNewestFirst
+                            ? Icons.arrow_downward
+                            : Icons.arrow_upward,
+                      ),
+                      onPressed: () => setState(
+                        () => _sortNewestFirst = !_sortNewestFirst,
+                      ),
                     ),
                     IconButton(
                       tooltip: 'Réinitialiser',
@@ -182,13 +187,17 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage>
 
                 // B11.4 : planification
                 onSchedule: () async {
-                  final when = await _pickDateTime(context);
+                  final when = await _pickDateTime();
                   if (when == null) return;
+
+                  if (!mounted) return;
 
                   await AnnouncementService.schedulePublish(
                     id: ann.id,
                     when: when,
                   );
+
+                  if (!mounted) return;
 
                   setState(() {});
                 },
@@ -217,37 +226,43 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage>
     }
   }
 
-  Future<DateTime?> _pickDateTime(BuildContext context) async {
-    final now = DateTime.now();
+  Future<DateTime?> _pickDateTime() async {
+  final now = DateTime.now();
 
-    final date = await showDatePicker(
-      context: context,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
-      initialDate: now,
+  final date = await showDatePicker(
+    context: context, // ← context du State
+    firstDate: now,
+    lastDate: now.add(const Duration(days: 365)),
+    initialDate: now,
+  );
+  if (date == null) return null;
+
+  if (!mounted) return null;
+
+  final time = await showTimePicker(
+    context: context, // ← context du State
+    initialTime:
+        TimeOfDay.fromDateTime(now.add(const Duration(minutes: 10))),
+  );
+  if (time == null) return null;
+
+  final when =
+      DateTime(date.year, date.month, date.day, time.hour, time.minute);
+
+  if (when.isBefore(now)) {
+    if (!mounted) return null;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Date/heure invalide (dans le passé).'),
+      ),
     );
-    if (date == null) return null;
-
-    final time = await showTimePicker(
-      context: context,
-      initialTime:
-          TimeOfDay.fromDateTime(now.add(const Duration(minutes: 10))),
-    );
-    if (time == null) return null;
-
-    final when = DateTime(date.year, date.month, date.day, time.hour, time.minute);
-
-    if (when.isBefore(now)) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Date/heure invalide (dans le passé).')),
-        );
-      }
-      return null;
-    }
-
-    return when;
+    return null;
   }
+
+  return when;
+}
+
 }
 
 // ======================================================
@@ -284,7 +299,6 @@ class _SearchBar extends StatelessWidget {
     );
   }
 }
-
 // ======================================================
 // 🎯 Filtre priorité (aligné sur ton enum: normal/important/critical)
 // ======================================================
@@ -308,9 +322,12 @@ class _PriorityFilter extends StatelessWidget {
       ),
       items: const [
         DropdownMenuItem(value: null, child: Text('Toutes')),
-        DropdownMenuItem(value: AnnouncementPriority.normal, child: Text('Normal')),
-        DropdownMenuItem(value: AnnouncementPriority.important, child: Text('Important')),
-        DropdownMenuItem(value: AnnouncementPriority.critical, child: Text('Critique')),
+        DropdownMenuItem(
+            value: AnnouncementPriority.normal, child: Text('Normal')),
+        DropdownMenuItem(
+            value: AnnouncementPriority.important, child: Text('Important')),
+        DropdownMenuItem(
+            value: AnnouncementPriority.critical, child: Text('Critique')),
       ],
       onChanged: onChanged,
     );
@@ -393,6 +410,8 @@ class _AdminAnnouncementTile extends StatelessWidget {
           icon: const Icon(Icons.send),
           onPressed: () async {
             await AnnouncementService.submitForValidation(announcement.id);
+
+            if (!context.mounted) return;
             onRefresh();
           },
         );
@@ -405,9 +424,12 @@ class _AdminAnnouncementTile extends StatelessWidget {
                 context,
                 actionLabel: 'Publier',
               );
-              if (!ok) return;
+
+              if (!context.mounted || !ok) return;
 
               await AnnouncementService.publishNow(announcement.id);
+
+              if (!context.mounted) return;
               onRefresh();
               return;
             }
@@ -417,7 +439,8 @@ class _AdminAnnouncementTile extends StatelessWidget {
                 context,
                 actionLabel: 'Programmer',
               );
-              if (!ok) return;
+
+              if (!context.mounted || !ok) return;
 
               if (onSchedule != null) {
                 await onSchedule!();
@@ -427,18 +450,21 @@ class _AdminAnnouncementTile extends StatelessWidget {
 
             if (v == 'reject') {
               final reason = await _askRejectReason(context);
-              if (reason == null) return;
+              if (!context.mounted || reason == null) return;
 
               await AnnouncementService.reject(
                 id: announcement.id,
                 reason: reason,
               );
+
+              if (!context.mounted) return;
               onRefresh();
               return;
             }
           },
           itemBuilder: (_) => const [
-            PopupMenuItem(value: 'publish', child: Text('Publier maintenant')),
+            PopupMenuItem(
+                value: 'publish', child: Text('Publier maintenant')),
             PopupMenuItem(value: 'schedule', child: Text('Programmer…')),
             PopupMenuItem(value: 'reject', child: Text('Rejeter…')),
           ],
@@ -477,7 +503,7 @@ class _AdminAnnouncementTile extends StatelessWidget {
       ),
     );
 
-    if (ok != true) return null;
+    if (!context.mounted || ok != true) return null;
 
     final reason = ctrl.text.trim();
     if (reason.isEmpty) {
@@ -494,7 +520,6 @@ class _AdminAnnouncementTile extends StatelessWidget {
     BuildContext context, {
     required String actionLabel,
   }) async {
-    // ✅ IMPORTANT : ta méthode service est getTargetMatricules(a)
     final targets = AnnouncementService.getTargetMatricules(announcement);
 
     if (targets.isEmpty) {
@@ -514,6 +539,8 @@ class _AdminAnnouncementTile extends StatelessWidget {
           ],
         ),
       );
+
+      if (!context.mounted) return false;
       return false;
     }
 
@@ -521,7 +548,8 @@ class _AdminAnnouncementTile extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         title: Text('$actionLabel cette annonce ?'),
-        content: Text('Cette annonce sera visible par ${targets.length} agent(s).'),
+        content:
+            Text('Cette annonce sera visible par ${targets.length} agent(s).'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -546,7 +574,6 @@ class _AdminAnnouncementTile extends StatelessWidget {
     return '$dd/$mm $hh:$mi';
   }
 }
-
 // ======================================================
 // 🏷️ Badges UI (statut)
 // ======================================================
@@ -563,27 +590,31 @@ class _StatusBadge extends StatelessWidget {
     switch (status) {
       case AnnouncementStatus.draft:
         label = 'DRAFT';
-        bg = Colors.grey.withOpacity(0.12);
+        bg = Colors.grey.withValues(alpha: 0.12);
         fg = Colors.grey.shade800;
         break;
+
       case AnnouncementStatus.pendingValidation:
         label = 'PENDING';
-        bg = Colors.orange.withOpacity(0.14);
+        bg = Colors.orange.withValues(alpha: 0.14);
         fg = Colors.orange.shade900;
         break;
+
       case AnnouncementStatus.scheduled:
         label = 'SCHEDULED';
-        bg = Colors.blue.withOpacity(0.14);
+        bg = Colors.blue.withValues(alpha: 0.14);
         fg = Colors.blue.shade800;
         break;
+
       case AnnouncementStatus.published:
         label = 'PUBLISHED';
-        bg = Colors.green.withOpacity(0.14);
+        bg = Colors.green.withValues(alpha: 0.14);
         fg = Colors.green.shade800;
         break;
+
       case AnnouncementStatus.rejected:
         label = 'REJECTED';
-        bg = Colors.red.withOpacity(0.14);
+        bg = Colors.red.withValues(alpha: 0.14);
         fg = Colors.red.shade800;
         break;
     }
@@ -608,19 +639,19 @@ class _PriorityBadge extends StatelessWidget {
     switch (priority) {
       case AnnouncementPriority.normal:
         label = 'NORMAL';
-        bg = Colors.grey.withOpacity(0.10);
+        bg = Colors.grey.withValues(alpha: 0.10);
         fg = Colors.grey.shade800;
         break;
 
       case AnnouncementPriority.important:
         label = 'IMPORTANT';
-        bg = Colors.blueGrey.withOpacity(0.10);
+        bg = Colors.blueGrey.withValues(alpha: 0.10);
         fg = Colors.blueGrey.shade800;
         break;
 
       case AnnouncementPriority.critical:
         label = 'CRITICAL';
-        bg = Colors.red.withOpacity(0.12);
+        bg = Colors.red.withValues(alpha: 0.12);
         fg = Colors.red.shade900;
         break;
     }

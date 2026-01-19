@@ -39,6 +39,9 @@ class AnnouncementCard extends StatelessWidget {
     final hasMedia =
         mediaPath != null && mediaPath.trim().isNotEmpty;
 
+    // ✅ variable non-nullable dérivée
+    final String? safeMediaPath = hasMedia ? mediaPath : null;
+
     return Opacity(
       opacity: isRead ? 0.92 : 1.0,
       child: Card(
@@ -147,9 +150,9 @@ class AnnouncementCard extends StatelessWidget {
                 // =============================
                 // MEDIA
                 // =============================
-                if (hasMedia) ...[
+                if (safeMediaPath != null) ...[
                   const SizedBox(height: 12),
-                  _MediaPreview(path: mediaPath!),
+                  _MediaPreview(path: safeMediaPath),
                 ],
 
                 const SizedBox(height: 10),
