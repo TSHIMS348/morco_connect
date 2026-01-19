@@ -63,7 +63,7 @@ class _AdminAuditPageState extends State<AdminAuditPage> {
                 child: Column(
                   children: [
                     DropdownButtonFormField<AuditAction>(
-                      value: _selectedAction,
+                      initialValue: _selectedAction,
                       hint: const Text('Filtrer par action'),
                       items: AuditAction.values.map((a) {
                         return DropdownMenuItem(

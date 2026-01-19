@@ -33,16 +33,13 @@ class _ConversationsPageState extends State<ConversationsPage> {
 
   // =========================
   // 🔄 RECHARGEMENT DES CONVERSATIONS
-  // - admin → toutes les conversations
-  // - user  → conversations autorisées
-  // ⚠️ async car Hive
   // =========================
   Future<void> _reload() async {
     final isAdmin = AuthSession.isAdmin;
 
     final list = isAdmin
-        ? await ConversationService.getAll()
-        : await ConversationService.getForCurrentUser();
+        ? ConversationService.getAll()
+        : ConversationService.getForCurrentUser();
 
     if (!mounted) return;
 
@@ -77,34 +74,27 @@ class _ConversationsPageState extends State<ConversationsPage> {
             .toList();
 
       case ConversationFilter.all:
-      default:
         return list;
     }
   }
 
   // =========================
   // 🎨 ICÔNE PAR TYPE
-  // (announcement géré)
   // =========================
   IconData _iconForType(ConversationType t) {
     switch (t) {
       case ConversationType.global:
         return Icons.public;
-
       case ConversationType.project:
         return Icons.work;
-
       case ConversationType.site:
         return Icons.factory;
-
       case ConversationType.city:
         return Icons.location_city;
-
       case ConversationType.direct:
         return Icons.person;
-
       case ConversationType.announcement:
-        return Icons.campaign; // ✅ NOUVEAU
+        return Icons.campaign;
     }
   }
 
@@ -115,31 +105,28 @@ class _ConversationsPageState extends State<ConversationsPage> {
     switch (c.type) {
       case ConversationType.global:
         return 'Tout le monde';
-
       case ConversationType.project:
         return 'Canal projet • ${c.participants.length} membres';
-
       case ConversationType.site:
         return 'Canal site • ${c.participants.length} membres';
-
       case ConversationType.city:
         return 'Canal ville • ${c.participants.length} membres';
-
       case ConversationType.direct:
         return 'Discussion privée';
-
       case ConversationType.announcement:
-        return 'Annonce officielle'; // ✅
+        return 'Annonce officielle';
     }
   }
 
   // =========================
-  // ➕ DÉMARRER UNE DISCUSSION DIRECTE
+  // ➕ DÉMARRER UNE DISCUSSION
   // =========================
   Future<void> _openStartChat() async {
     final created = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const StartChatPage()),
     );
+
+    if (!mounted) return;
 
     if (created == true) {
       _reload();
@@ -156,6 +143,7 @@ class _ConversationsPageState extends State<ConversationsPage> {
       ),
     );
 
+    if (!mounted) return;
     _reload();
   }
 
@@ -178,7 +166,7 @@ class _ConversationsPageState extends State<ConversationsPage> {
       body: Column(
         children: [
           // =========================
-          // 🎛️ FILTRES (Projet / Site / Ville / Global)
+          // 🎛️ FILTRES
           // =========================
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -202,7 +190,7 @@ class _ConversationsPageState extends State<ConversationsPage> {
           const Divider(height: 1),
 
           // =========================
-          // 📜 LISTE DES CONVERSATIONS
+          // 📜 LISTE
           // =========================
           Expanded(
             child: visibleConversations.isEmpty
@@ -216,10 +204,6 @@ class _ConversationsPageState extends State<ConversationsPage> {
 
                       return ListTile(
                         leading: Icon(_iconForType(c.type)),
-
-                        // =========================
-                        // 🛡️ BADGE ADMIN (VISIBLE SI ADMIN)
-                        // =========================
                         title: Row(
                           children: [
                             Expanded(child: Text(c.title)),
@@ -230,7 +214,7 @@ class _ConversationsPageState extends State<ConversationsPage> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.red.withOpacity(0.15),
+                                  color: Colors.red.withValues(alpha: 38),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Text(
@@ -244,7 +228,6 @@ class _ConversationsPageState extends State<ConversationsPage> {
                               ),
                           ],
                         ),
-
                         subtitle: Text(_subtitle(c)),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => _openChat(c),

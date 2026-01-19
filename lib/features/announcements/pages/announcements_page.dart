@@ -4,7 +4,6 @@ import '../../auth/services/auth_session.dart';
 
 import '../models/announcement.dart';
 import '../models/announcement_target_type.dart';
-import '../models/announcement_priority.dart';
 import '../services/announcement_service.dart';
 
 import '../widgets/announcement_card.dart';
@@ -227,7 +226,8 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                         return AnnouncementCard(
                           announcement: a,
                           onOpen: () async {
-                            await Navigator.of(context).push(
+                            final navigator = Navigator.of(context);
+                            await navigator.push(
                               MaterialPageRoute(
                                 builder: (_) => AnnouncementDetailPage(
                                   announcementId: a.id,
@@ -315,7 +315,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
 }
 
 // ======================================================
-// 🧩 TAG TABS (AJOUTÉ)
+// 🧩 TAG TABS
 // ======================================================
 class _TagTabs extends StatelessWidget {
   final int currentIndex;

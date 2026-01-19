@@ -18,7 +18,7 @@ class AdminAnnouncementChartsPage extends StatefulWidget {
 class _AdminAnnouncementChartsPageState
     extends State<AdminAnnouncementChartsPage>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  late final TabController _tabController;
 
   @override
   void initState() {
@@ -60,14 +60,16 @@ class _AdminAnnouncementChartsPageState
 
 enum _Target { site, city }
 
-// ======================================================
-// 🍩 DONUT — Lecture globale
-// ======================================================
+/// ======================================================
+/// 🍩 DONUT — Lecture globale
+/// ======================================================
 class _GlobalDonut extends StatelessWidget {
   const _GlobalDonut();
 
   @override
   Widget build(BuildContext context) {
+    final users = UserDirectoryService.getAll(activeOnly: true);
+
     final published = AnnouncementService.getAllCached()
         .where((a) => a.status == AnnouncementStatus.published)
         .toList();
@@ -76,13 +78,21 @@ class _GlobalDonut extends StatelessWidget {
     int read = 0;
 
     for (final a in published) {
-      final stats = AnnouncementService.getReadStats(a);
-      total += stats.total;
-      read += stats.read;
+      final targets =
+          AnnouncementService.getTargetMatricules(a).toSet();
+      final readers = a.readBy.toSet();
+
+      for (final u in users) {
+        if (!targets.contains(u.matricule)) continue;
+        total++;
+        if (readers.contains(u.matricule)) {
+          read++;
+        }
+      }
     }
 
-    final unread = total - read;
-    final hasData = total > 0;
+    final int unread = total - read;
+    final bool hasData = total > 0;
 
     return Center(
       child: Padding(
@@ -95,7 +105,6 @@ class _GlobalDonut extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 20),
-
             SizedBox(
               height: 260,
               child: hasData
@@ -121,11 +130,10 @@ class _GlobalDonut extends StatelessWidget {
                     )
                   : const Center(child: Text('Aucune donnée')),
             ),
-
             const SizedBox(height: 20),
             Text(
               hasData
-                  ? '${(read / total * 100).round()} % lus'
+                  ? '${((read / total) * 100).round()} % lus'
                   : 'Audience = 0',
               style: const TextStyle(
                 fontSize: 16,
@@ -139,9 +147,9 @@ class _GlobalDonut extends StatelessWidget {
   }
 }
 
-// ======================================================
-// 📊 BAR CHART — Site / Ville
-// ======================================================
+/// ======================================================
+/// 📊 BAR CHART — Site / Ville
+/// ======================================================
 class _BarChartByTarget extends StatelessWidget {
   final _Target type;
   const _BarChartByTarget({required this.type});
@@ -149,6 +157,7 @@ class _BarChartByTarget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final users = UserDirectoryService.getAll(activeOnly: true);
+
     final published = AnnouncementService.getAllCached()
         .where((a) => a.status == AnnouncementStatus.published)
         .toList();
@@ -157,15 +166,17 @@ class _BarChartByTarget extends StatelessWidget {
 
     for (final a in published) {
       final readers = a.readBy.toSet();
-      final targets = AnnouncementService.getTargetMatricules(a).toSet();
+      final targets =
+          AnnouncementService.getTargetMatricules(a).toSet();
 
       for (final u in users) {
-        final key = type == _Target.site ? u.site : u.city;
-        if (key == null) continue;
+        final String key =
+            type == _Target.site ? u.site : u.city;
         if (!targets.contains(u.matricule)) continue;
 
         map.putIfAbsent(key, () => _Stats());
         map[key]!.total++;
+
         if (readers.contains(u.matricule)) {
           map[key]!.read++;
         }
@@ -187,9 +198,9 @@ class _BarChartByTarget extends StatelessWidget {
           maxY: 100,
           barGroups: List.generate(entries.length, (i) {
             final e = entries[i];
-            final rate = e.value.total == 0
+            final double rate = e.value.total == 0
                 ? 0
-                : (e.value.read / e.value.total * 100);
+                : (e.value.read / e.value.total) * 100;
 
             return BarChartGroupData(
               x: i,
@@ -211,7 +222,7 @@ class _BarChartByTarget extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (value, meta) {
-                  final i = value.toInt();
+                  final int i = value.toInt();
                   if (i < 0 || i >= entries.length) {
                     return const SizedBox.shrink();
                   }

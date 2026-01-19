@@ -7,7 +7,6 @@ import '../../auth/services/auth_session.dart';
 
 import '../models/announcement.dart';
 import '../models/announcement_target.dart';
-import '../models/announcement_target_type.dart';
 
 /// ======================================================
 /// 📢 Announcement Card (B11.x compatible)
@@ -36,9 +35,12 @@ class AnnouncementCard extends StatelessWidget {
     final theme = _tagTheme(tag);
     final isRead = _isReadByMe;
 
-    final String? mediaPath = announcement.mediaPath;
-    final bool hasMedia =
+    final mediaPath = announcement.mediaPath;
+    final hasMedia =
         mediaPath != null && mediaPath.trim().isNotEmpty;
+
+    // ✅ variable non-nullable dérivée
+    final String? safeMediaPath = hasMedia ? mediaPath : null;
 
     return Opacity(
       opacity: isRead ? 0.92 : 1.0,
@@ -112,8 +114,11 @@ class AnnouncementCard extends StatelessWidget {
                 // =============================
                 Row(
                   children: [
-                    Icon(Icons.person,
-                        size: 16, color: Colors.grey.shade700),
+                    Icon(
+                      Icons.person,
+                      size: 16,
+                      color: Colors.grey.shade700,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       'Par ${announcement.authorMatricule}',
@@ -143,11 +148,11 @@ class AnnouncementCard extends StatelessWidget {
                 ],
 
                 // =============================
-                // MEDIA (mediaPath)
+                // MEDIA
                 // =============================
-                if (hasMedia) ...[
+                if (safeMediaPath != null) ...[
                   const SizedBox(height: 12),
-                  _MediaPreview(path: mediaPath!),
+                  _MediaPreview(path: safeMediaPath),
                 ],
 
                 const SizedBox(height: 10),
@@ -194,38 +199,38 @@ class AnnouncementCard extends StatelessWidget {
   // Helpers
   // =============================
   _AnnTag _inferTag(Announcement a) {
-    final t = a.title.toLowerCase();
-    final b = (a.body ?? '').toLowerCase();
+    final title = a.title.toLowerCase();
+    final body = (a.body ?? '').toLowerCase();
 
-    if (t.contains('hse') || b.contains('sécurité')) {
+    if (title.contains('hse') || body.contains('sécurité')) {
       return _AnnTag.hse();
     }
-    if (t.contains('direction') || t.contains('dg')) {
+    if (title.contains('direction') || title.contains('dg')) {
       return _AnnTag.direction();
     }
     return _AnnTag.info();
   }
 
   bool _isCritical(Announcement a, _AnnTag tag) {
-    final t = a.title.toLowerCase();
-    return tag.key == 'hse' || t.contains('urgent');
+    final title = a.title.toLowerCase();
+    return tag.key == 'hse' || title.contains('urgent');
   }
 
   _TagColors _tagTheme(_AnnTag tag) {
     switch (tag.key) {
       case 'hse':
-        return _TagColors(
-          bg: Colors.orange.withOpacity(0.15),
+        return const _TagColors(
+          bg: Color.fromRGBO(255, 152, 0, 0.15),
           fg: Colors.deepOrange,
         );
       case 'direction':
         return _TagColors(
-          bg: Colors.blue.withOpacity(0.12),
+          bg: Colors.blue.withValues(alpha: 0.12),
           fg: Colors.blue.shade700,
         );
       default:
         return _TagColors(
-          bg: Colors.grey.withOpacity(0.15),
+          bg: Colors.grey.withValues(alpha: 0.15),
           fg: Colors.grey.shade800,
         );
     }
@@ -256,7 +261,7 @@ class _TargetsChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.04),
+        color: Colors.black.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(label, style: const TextStyle(fontSize: 12)),
@@ -265,7 +270,7 @@ class _TargetsChip extends StatelessWidget {
 }
 
 // ======================================================
-// 📎 Media preview (FILE / IMAGE)
+// 📎 Media preview
 // ======================================================
 class _MediaPreview extends StatelessWidget {
   final String path;
@@ -280,7 +285,8 @@ class _MediaPreview extends StatelessWidget {
     }
 
     final lower = path.toLowerCase();
-    final isImage = lower.endsWith('.png') ||
+    final isImage =
+        lower.endsWith('.png') ||
         lower.endsWith('.jpg') ||
         lower.endsWith('.jpeg');
 
@@ -301,7 +307,7 @@ class _MediaPreview extends StatelessWidget {
 }
 
 // ======================================================
-// 🧩 Small UI parts
+// 🧩 UI parts
 // ======================================================
 class _TagChip extends StatelessWidget {
   final String label;
@@ -349,7 +355,7 @@ class _AdminBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.12),
+        color: Colors.red.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6),
       ),
       child: const Text(

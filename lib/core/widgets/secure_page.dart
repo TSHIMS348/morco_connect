@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+/// ======================================================
+/// 🔒 SecurePage
+/// - Empêche toute navigation arrière
+/// - Conforme Flutter moderne (PopScope)
+/// ======================================================
 class SecurePage extends StatelessWidget {
   final Widget child;
 
@@ -10,8 +15,8 @@ class SecurePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false, // ⛔ empêche le bouton retour
+    return PopScope(
+      canPop: false, // ⛔ blocage total du bouton retour
       child: child,
     );
   }

@@ -10,9 +10,6 @@ import '../services/announcement_service.dart';
 
 /// =====================================================
 /// 📢 PAGE DÉTAIL ANNONCE
-/// - Lecture complète
-/// - Marquage lu automatique
-/// - Impact post-publication (B11.6 – ADMIN)
 /// =====================================================
 class AnnouncementDetailPage extends StatefulWidget {
   final String announcementId;
@@ -37,25 +34,27 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
 
     // 🔁 publication différée
     AnnouncementService.processScheduled().then((_) {
-      if (mounted) _load();
+      if (!mounted) return;
+      _load();
     });
   }
 
   void _load() {
     final all = AnnouncementService.getAllCached();
 
-    final a = all.firstWhere(
+    final announcement = all.firstWhere(
       (x) => x.id == widget.announcementId,
       orElse: () => throw Exception('Annonce introuvable'),
     );
 
-    setState(() => _announcement = a);
+    setState(() => _announcement = announcement);
 
     // 👁️ marquer comme lu
     final me = AuthSession.currentUser;
-    if (me != null && a.status == AnnouncementStatus.published) {
+    if (me != null &&
+        announcement.status == AnnouncementStatus.published) {
       AnnouncementService.markAsRead(
-        announcementId: a.id,
+        announcementId: announcement.id,
         readerMatricule: me.matricule,
       );
     }
@@ -84,9 +83,7 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // =============================
           // 🏷️ HEADER
-          // =============================
           Text(
             a.title,
             style: const TextStyle(
@@ -104,16 +101,16 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
               _InfoChip(text: 'Auteur : ${a.authorMatricule}'),
               _InfoChip(
                 text:
-                    'Créée le ${a.createdAt.day.toString().padLeft(2, '0')}/${a.createdAt.month.toString().padLeft(2, '0')}/${a.createdAt.year}',
+                    'Créée le ${a.createdAt.day.toString().padLeft(2, '0')}/'
+                    '${a.createdAt.month.toString().padLeft(2, '0')}/'
+                    '${a.createdAt.year}',
               ),
             ],
           ),
 
           const Divider(height: 32),
 
-          // =============================
           // 📝 CONTENU
-          // =============================
           if ((a.body ?? '').trim().isNotEmpty)
             Text(
               a.body!.trim(),
@@ -124,12 +121,8 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
 
           const SizedBox(height: 24),
 
-          // =============================
-          // 📊 B11.6 — IMPACT (ADMIN)
-          // =============================
-          _ImpactBlock(
-            announcement: a,
-          ),
+          // 📊 IMPACT (ADMIN)
+          _ImpactBlock(announcement: a),
         ],
       ),
     );
@@ -137,7 +130,7 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
 }
 
 // ======================================================
-// 📊 B11.6 — Impact post-publication
+// 📊 Impact post-publication
 // ======================================================
 class _ImpactBlock extends StatelessWidget {
   final Announcement announcement;
@@ -146,7 +139,9 @@ class _ImpactBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!AuthSession.isAdmin) return const SizedBox.shrink();
+    if (!AuthSession.isAdmin) {
+      return const SizedBox.shrink();
+    }
 
     if (announcement.status != AnnouncementStatus.published) {
       return _infoBox(
@@ -155,9 +150,6 @@ class _ImpactBlock extends StatelessWidget {
       );
     }
 
-    // =============================
-    // 🔢 Calcul impact
-    // =============================
     final users = UserDirectoryService.getAll(activeOnly: true);
 
     final targeted = users.where((u) {
@@ -172,7 +164,7 @@ class _ImpactBlock extends StatelessWidget {
           case AnnouncementTargetType.city:
             return u.city == t.refId;
           case AnnouncementTargetType.project:
-            return false; // pas dispo ici
+            return false;
         }
       });
     }).toList();
@@ -189,7 +181,7 @@ class _ImpactBlock extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: Colors.green.withOpacity(0.07),
+        color: Colors.green.withValues(alpha: 0.07),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,7 +222,7 @@ class _ImpactBlock extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
       ),
       child: Text(
         text,
@@ -272,12 +264,15 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.06),
+        color: Colors.black.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
@@ -295,7 +290,7 @@ class _Kpi extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: Colors.black.withOpacity(0.04),
+        color: Colors.black.withValues(alpha: 0.04),
       ),
       child: Text(
         '$label : $value',

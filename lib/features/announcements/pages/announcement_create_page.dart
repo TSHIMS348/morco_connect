@@ -204,7 +204,7 @@ class _AnnouncementCreatePageState extends State<AnnouncementCreatePage> {
 
           // TYPE
           DropdownButtonFormField<AnnouncementType>(
-            value: _type,
+            initialValue: _type,
             decoration: const InputDecoration(
               labelText: 'Type',
               border: OutlineInputBorder(),
@@ -221,7 +221,7 @@ class _AnnouncementCreatePageState extends State<AnnouncementCreatePage> {
 
           // PRIORITÉ
           DropdownButtonFormField<AnnouncementPriority>(
-            value: _priority,
+            initialValue: _priority,
             decoration: const InputDecoration(
               labelText: 'Priorité',
               border: OutlineInputBorder(),
@@ -238,7 +238,7 @@ class _AnnouncementCreatePageState extends State<AnnouncementCreatePage> {
 
           // CIBLAGE
           DropdownButtonFormField<AnnouncementTargetType>(
-            value: _targetType,
+            initialValue: _targetType,
             decoration: const InputDecoration(
               labelText: 'Ciblage',
               border: OutlineInputBorder(),
@@ -355,7 +355,7 @@ class _TargetSelectorFromUsers extends StatelessWidget {
     }();
 
     return DropdownButtonFormField<String>(
-      value: (selected != null && selected!.isNotEmpty) ? selected : null,
+      initialValue: (selected != null && selected!.isNotEmpty) ? selected : null,
       decoration: const InputDecoration(
         labelText: 'Cible',
         border: OutlineInputBorder(),

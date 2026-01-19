@@ -38,7 +38,9 @@ class AuditService {
 
       if (userMatricule != null &&
           userMatricule.isNotEmpty &&
-          e.userMatricule != userMatricule) return false;
+          e.userMatricule != userMatricule) {
+        return false;
+      }
 
       if (from != null && e.timestamp.isBefore(from)) return false;
 

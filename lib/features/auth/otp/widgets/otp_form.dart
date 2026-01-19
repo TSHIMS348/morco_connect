@@ -1,9 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+
 import '../../services/auth_session.dart';
 import 'package:morco_connect/features/audit/services/audit_service.dart';
 import 'package:morco_connect/features/audit/models/audit_action.dart';
 
+/// ======================================================
+/// 🔐 OTP FORM
+/// - Validation OTP avec expiration
+/// - Sécurité async (mounted)
+/// - Audit systématique
+/// ======================================================
 class OtpForm extends StatefulWidget {
   const OtpForm({super.key});
 
@@ -15,7 +22,7 @@ class _OtpFormState extends State<OtpForm> {
   final _formKey = GlobalKey<FormState>();
   final _otpController = TextEditingController();
 
-  static const int _otpDuration = 120;
+  static const int _otpDuration = 120; // secondes
   Timer? _timer;
   int _remainingSeconds = _otpDuration;
 
@@ -27,6 +34,9 @@ class _OtpFormState extends State<OtpForm> {
     _startTimer();
   }
 
+  /// ======================================================
+  /// ⏱️ Timer OTP
+  /// ======================================================
   void _startTimer() {
     _timer?.cancel();
     _remainingSeconds = _otpDuration;
@@ -50,10 +60,13 @@ class _OtpFormState extends State<OtpForm> {
     return '$minutes:$seconds';
   }
 
+  /// ======================================================
+  /// ✅ Validation OTP
+  /// ======================================================
   Future<void> _submit() async {
     if (_isLoading) return;
 
-    /// ⛔ OTP expiré → logout + audit + redirection forcée
+    /// ⛔ OTP expiré → logout + audit + redirection
     if (_remainingSeconds == 0) {
       AuditService.log(
         AuditAction.sessionExpired,
@@ -64,7 +77,8 @@ class _OtpFormState extends State<OtpForm> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context)
+      final messenger = ScaffoldMessenger.of(context);
+      messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
@@ -85,19 +99,21 @@ class _OtpFormState extends State<OtpForm> {
 
     // ⏳ Simulation vérification OTP
     await Future.delayed(const Duration(seconds: 2));
-
     if (!mounted) return;
+
     setState(() => _isLoading = false);
 
-    // ✅ TRANSITION pending → loggedIn
+    // ✅ Transition pending → loggedIn
     await AuthSession.loginFromPending();
+    if (!mounted) return;
 
     AuditService.log(
       AuditAction.otpValidated,
       description: 'OTP validé, compte utilisateur activé',
     );
 
-    ScaffoldMessenger.of(context)
+    final messenger = ScaffoldMessenger.of(context);
+    messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(
         const SnackBar(content: Text('Compte activé avec succès')),
@@ -109,17 +125,6 @@ class _OtpFormState extends State<OtpForm> {
     );
   }
 
-  void _showError(String message) {
-    AuditService.log(
-      AuditAction.otpFailed,
-      description: message,
-    );
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
-  }
-
   @override
   void dispose() {
     _timer?.cancel();
@@ -127,10 +132,13 @@ class _OtpFormState extends State<OtpForm> {
     super.dispose();
   }
 
+  /// ======================================================
+  /// 🧱 UI
+  /// ======================================================
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false, // ⛔ blocage bouton retour
+    return PopScope(
+      canPop: false, // ⛔ Blocage retour (remplace WillPopScope)
       child: Form(
         key: _formKey,
         child: Column(
