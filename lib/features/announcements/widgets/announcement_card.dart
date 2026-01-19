@@ -35,8 +35,8 @@ class AnnouncementCard extends StatelessWidget {
     final theme = _tagTheme(tag);
     final isRead = _isReadByMe;
 
-    final String? mediaPath = announcement.mediaPath;
-    final bool hasMedia =
+    final mediaPath = announcement.mediaPath;
+    final hasMedia =
         mediaPath != null && mediaPath.trim().isNotEmpty;
 
     return Opacity(
@@ -138,7 +138,7 @@ class AnnouncementCard extends StatelessWidget {
                 if ((announcement.body ?? '').trim().isNotEmpty) ...[
                   const SizedBox(height: 10),
                   Text(
-                    announcement.body ?? '',
+                    announcement.body!,
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -149,7 +149,7 @@ class AnnouncementCard extends StatelessWidget {
                 // =============================
                 if (hasMedia) ...[
                   const SizedBox(height: 12),
-                  _MediaPreview(path: mediaPath),
+                  _MediaPreview(path: mediaPath!),
                 ],
 
                 const SizedBox(height: 10),
@@ -196,28 +196,28 @@ class AnnouncementCard extends StatelessWidget {
   // Helpers
   // =============================
   _AnnTag _inferTag(Announcement a) {
-    final t = a.title.toLowerCase();
-    final b = (a.body ?? '').toLowerCase();
+    final title = a.title.toLowerCase();
+    final body = (a.body ?? '').toLowerCase();
 
-    if (t.contains('hse') || b.contains('sécurité')) {
+    if (title.contains('hse') || body.contains('sécurité')) {
       return _AnnTag.hse();
     }
-    if (t.contains('direction') || t.contains('dg')) {
+    if (title.contains('direction') || title.contains('dg')) {
       return _AnnTag.direction();
     }
     return _AnnTag.info();
   }
 
   bool _isCritical(Announcement a, _AnnTag tag) {
-    final t = a.title.toLowerCase();
-    return tag.key == 'hse' || t.contains('urgent');
+    final title = a.title.toLowerCase();
+    return tag.key == 'hse' || title.contains('urgent');
   }
 
   _TagColors _tagTheme(_AnnTag tag) {
     switch (tag.key) {
       case 'hse':
-        return _TagColors(
-          bg: Colors.orange.withValues(alpha: 0.15),
+        return const _TagColors(
+          bg: Color.fromRGBO(255, 152, 0, 0.15),
           fg: Colors.deepOrange,
         );
       case 'direction':
@@ -282,7 +282,8 @@ class _MediaPreview extends StatelessWidget {
     }
 
     final lower = path.toLowerCase();
-    final isImage = lower.endsWith('.png') ||
+    final isImage =
+        lower.endsWith('.png') ||
         lower.endsWith('.jpg') ||
         lower.endsWith('.jpeg');
 
