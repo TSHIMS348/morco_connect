@@ -13,7 +13,6 @@ class AppTheme {
       primary: AppColors.primary,
       secondary: AppColors.secondary,
       error: AppColors.error,
-      background: AppColors.background,
       surface: AppColors.surface,
     ),
 
@@ -37,9 +36,9 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        minimumSize: const Size.fromHeight(52), // 👈 hauteur uniforme
+        minimumSize: const Size.fromHeight(52),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12), // 👈 plus moderne
+          borderRadius: BorderRadius.circular(12),
         ),
         textStyle: AppTextStyles.button,
       ),
@@ -53,17 +52,14 @@ class AppTheme {
         horizontal: 16,
         vertical: 16,
       ),
-
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
-
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
-
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
@@ -71,7 +67,6 @@ class AppTheme {
           width: 1.5,
         ),
       ),
-
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
@@ -79,7 +74,6 @@ class AppTheme {
           width: 1.2,
         ),
       ),
-
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
@@ -87,7 +81,6 @@ class AppTheme {
           width: 1.5,
         ),
       ),
-
       labelStyle: const TextStyle(
         color: AppColors.textSecondary,
       ),

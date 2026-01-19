@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../services/auth_session.dart';
 import '../models/user_profile.dart';
 
-
-
 class RegisterForm extends StatefulWidget {
   const RegisterForm({super.key});
 
@@ -37,14 +35,15 @@ class _RegisterFormState extends State<RegisterForm> {
 
     // 🟡 Création utilisateur en attente
     await AuthSession.setPendingUser(
-  UserProfile(
-    fullName: _nameController.text,
-    phone: _phoneController.text,
-    email: _emailController.text,
-    matricule: _matriculeController.text,
-  ),
-);
+      UserProfile(
+        fullName: _nameController.text,
+        phone: _phoneController.text,
+        email: _emailController.text,
+        matricule: _matriculeController.text,
+      ),
+    );
 
+    if (!mounted) return;
 
     setState(() => _isLoading = false);
 
@@ -70,7 +69,6 @@ class _RegisterFormState extends State<RegisterForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Nom complet
           TextFormField(
             controller: _nameController,
             decoration: const InputDecoration(
@@ -80,10 +78,7 @@ class _RegisterFormState extends State<RegisterForm> {
             validator: (v) =>
                 v == null || v.isEmpty ? 'Champ requis' : null,
           ),
-
           const SizedBox(height: 16),
-
-          // Téléphone
           TextFormField(
             controller: _phoneController,
             decoration: const InputDecoration(
@@ -94,10 +89,7 @@ class _RegisterFormState extends State<RegisterForm> {
             validator: (v) =>
                 v == null || v.length < 6 ? 'Numéro invalide' : null,
           ),
-
           const SizedBox(height: 16),
-
-          // Email
           TextFormField(
             controller: _emailController,
             decoration: const InputDecoration(
@@ -111,10 +103,7 @@ class _RegisterFormState extends State<RegisterForm> {
               return null;
             },
           ),
-
           const SizedBox(height: 16),
-
-          // Matricule
           TextFormField(
             controller: _matriculeController,
             decoration: const InputDecoration(
@@ -124,10 +113,7 @@ class _RegisterFormState extends State<RegisterForm> {
             validator: (v) =>
                 v == null || v.isEmpty ? 'Champ requis' : null,
           ),
-
           const SizedBox(height: 16),
-
-          // Mot de passe
           TextFormField(
             controller: _passwordController,
             obscureText: _obscurePassword,
@@ -140,20 +126,17 @@ class _RegisterFormState extends State<RegisterForm> {
                       ? Icons.visibility_off
                       : Icons.visibility,
                 ),
-                onPressed: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
+                onPressed: () => setState(
+                  () => _obscurePassword = !_obscurePassword,
+                ),
               ),
             ),
             validator: (v) =>
-                v == null || v.length < 6 ? 'Minimum 6 caractères' : null,
+                v == null || v.length < 6
+                    ? 'Minimum 6 caractères'
+                    : null,
           ),
-
           const SizedBox(height: 16),
-
-          // Confirmation mot de passe
           TextFormField(
             controller: _confirmPasswordController,
             obscureText: _obscureConfirmPassword,
@@ -166,12 +149,10 @@ class _RegisterFormState extends State<RegisterForm> {
                       ? Icons.visibility_off
                       : Icons.visibility,
                 ),
-                onPressed: () {
-                  setState(() {
-                    _obscureConfirmPassword =
-                        !_obscureConfirmPassword;
-                  });
-                },
+                onPressed: () => setState(
+                  () => _obscureConfirmPassword =
+                      !_obscureConfirmPassword,
+                ),
               ),
             ),
             validator: (v) {
@@ -182,17 +163,15 @@ class _RegisterFormState extends State<RegisterForm> {
               return null;
             },
           ),
-
           const SizedBox(height: 24),
-
-          // Bouton créer compte
           ElevatedButton(
             onPressed: _isLoading ? null : _submit,
             child: _isLoading
                 ? const SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child:
+                        CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Text('Créer le compte'),
           ),

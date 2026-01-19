@@ -7,7 +7,7 @@ import 'package:morco_connect/features/auth/models/user_profile.dart';
 import 'package:morco_connect/features/projects/pages/projects_page.dart';
 import 'package:morco_connect/features/messaging/pages/conversations_page.dart';
 import 'package:morco_connect/features/announcements/pages/announcements_page.dart';
-import 'package:morco_connect/features/profile/profile_page.dart'; // ✅ CHEMIN CORRIGÉ
+import 'package:morco_connect/features/profile/profile_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -24,15 +24,10 @@ class HomePage extends StatelessWidget {
           : Scaffold(
               appBar: _HomeHeader(user: user),
               body: RefreshIndicator(
-                onRefresh: () async {
-                  // 🔜 futur : refresh annonces / projets / messages
-                },
+                onRefresh: () async {},
                 child: ListView(
                   padding: const EdgeInsets.all(14),
                   children: [
-                    // ==================================================
-                    // 📰 FIL INSTITUTIONNEL – APERÇU
-                    // ==================================================
                     _SectionHeader(
                       title: 'Actualités & Annonces',
                       onSeeAll: () {
@@ -45,12 +40,7 @@ class HomePage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     const _AnnouncementsPreview(),
-
                     const SizedBox(height: 20),
-
-                    // ==================================================
-                    // 🏗️ PROJETS
-                    // ==================================================
                     _SectionHeader(
                       title: 'Mes projets',
                       onSeeAll: () {
@@ -63,29 +53,19 @@ class HomePage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     const _ProjectsPreview(),
-
                     const SizedBox(height: 24),
-
-                    // ==================================================
-                    // ⚡ RACCOURCIS
-                    // ==================================================
-                    _QuickActions(context),
+                    _quickActions(context),
                   ],
                 ),
               ),
-
-              // ==================================================
-              // ⬇️ BOTTOM NAVIGATION
-              // ==================================================
               bottomNavigationBar: const _BottomNav(currentIndex: 0),
             ),
     );
   }
 }
 
-//
 // ======================================================
-// 🔝 EN-TÊTE CONTEXTUELLE
+// 🔝 EN-TÊTE
 // ======================================================
 class _HomeHeader extends StatelessWidget implements PreferredSizeWidget {
   final UserProfile user;
@@ -102,10 +82,7 @@ class _HomeHeader extends StatelessWidget implements PreferredSizeWidget {
       titleSpacing: 12,
       title: Row(
         children: [
-          const CircleAvatar(
-            radius: 20,
-            child: Icon(Icons.person),
-          ),
+          const CircleAvatar(radius: 20, child: Icon(Icons.person)),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -149,7 +126,6 @@ class _HomeHeader extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-//
 // ======================================================
 // 📰 APERÇU ANNONCES
 // ======================================================
@@ -162,11 +138,11 @@ class _AnnouncementsPreview extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: Colors.blue.withOpacity(0.06),
+        color: Colors.blue.withValues(alpha: 15),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           Text(
             'Dernières communications',
             style: TextStyle(fontWeight: FontWeight.w700),
@@ -182,7 +158,6 @@ class _AnnouncementsPreview extends StatelessWidget {
   }
 }
 
-//
 // ======================================================
 // 🏗️ APERÇU PROJETS
 // ======================================================
@@ -195,7 +170,7 @@ class _ProjectsPreview extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: Colors.green.withOpacity(0.06),
+        color: Colors.green.withValues(alpha: 15),
       ),
       child: const Text(
         'Accédez rapidement à vos projets actifs.',
@@ -205,11 +180,10 @@ class _ProjectsPreview extends StatelessWidget {
   }
 }
 
-//
 // ======================================================
 // ⚡ RACCOURCIS
 // ======================================================
-Widget _QuickActions(BuildContext context) {
+Widget _quickActions(BuildContext context) {
   return GridView.count(
     shrinkWrap: true,
     physics: const NeverScrollableScrollPhysics(),
@@ -283,9 +257,8 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
-//
 // ======================================================
-// ⬇️ BOTTOM NAVIGATION
+// ⬇️ BOTTOM NAV
 // ======================================================
 class _BottomNav extends StatelessWidget {
   final int currentIndex;
@@ -298,8 +271,6 @@ class _BottomNav extends StatelessWidget {
       currentIndex: currentIndex,
       onTap: (i) {
         switch (i) {
-          case 0:
-            break;
           case 1:
             Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ProjectsPage()),
@@ -327,9 +298,8 @@ class _BottomNav extends StatelessWidget {
   }
 }
 
-//
 // ======================================================
-// 🧩 HEADER DE SECTION
+// 🧩 HEADER SECTION
 // ======================================================
 class _SectionHeader extends StatelessWidget {
   final String title;

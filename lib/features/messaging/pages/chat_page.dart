@@ -46,7 +46,6 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
 
-    // ⭐ Chargement depuis Hive + marquage delivered/read pour DIRECT
     MessageService.loadConversation(widget.conversationId).then((_) {
       final me = AuthSession.currentUser?.matricule;
       final c = ConversationService.getById(widget.conversationId);
@@ -64,9 +63,7 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void dispose() {
-    // 🧹 Nettoyage cache mémoire
     MessageService.clearCacheFor(widget.conversationId);
-
     _inputCtrl.dispose();
     _player.dispose();
     _recorder.dispose();
@@ -253,8 +250,8 @@ class _ChatPageState extends State<ChatPage> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: isMe
-                          ? Colors.blue.withOpacity(0.12)
-                          : Colors.grey.withOpacity(0.15),
+                          ? Colors.blue.withValues(alpha: 31)
+                          : Colors.grey.withValues(alpha: 38),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -268,9 +265,7 @@ class _ChatPageState extends State<ChatPage> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-
                         if (m.hasText) Text(m.content!),
-
                         for (final a in m.attachments) ...[
                           const SizedBox(height: 6),
                           if (a.type == AttachmentType.image)
@@ -301,10 +296,7 @@ class _ChatPageState extends State<ChatPage> {
                                   OpenFilex.open(a.path),
                             ),
                         ],
-
                         const SizedBox(height: 4),
-
-                        // ⏱️ HEURE + STATUT WHATSAPP-LIKE
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -314,30 +306,21 @@ class _ChatPageState extends State<ChatPage> {
                               Padding(
                                 padding:
                                     const EdgeInsets.only(left: 6),
-                                child: GestureDetector(
-                                  onTap: m.status ==
-                                          MessageStatus.failed
-                                      ? () {
-                                          MessageService.retry(m);
-                                          _reload();
-                                        }
-                                      : null,
-                                  child: Icon(
-                                    m.status == MessageStatus.sent
-                                        ? Icons.check
-                                        : m.status ==
-                                                MessageStatus.delivered
-                                            ? Icons.done_all
-                                            : m.status ==
-                                                    MessageStatus.read
-                                                ? Icons.done_all
-                                                : Icons.schedule,
-                                    size: 14,
-                                    color: m.status ==
-                                            MessageStatus.read
-                                        ? Colors.blue
-                                        : Colors.grey,
-                                  ),
+                                child: Icon(
+                                  m.status == MessageStatus.sent
+                                      ? Icons.check
+                                      : m.status ==
+                                              MessageStatus.delivered
+                                          ? Icons.done_all
+                                          : m.status ==
+                                                  MessageStatus.read
+                                              ? Icons.done_all
+                                              : Icons.schedule,
+                                  size: 14,
+                                  color: m.status ==
+                                          MessageStatus.read
+                                      ? Colors.blue
+                                      : Colors.grey,
                                 ),
                               ),
                           ],
@@ -349,7 +332,6 @@ class _ChatPageState extends State<ChatPage> {
               },
             ),
           ),
-
           if (!canWrite)
             Container(
               padding: const EdgeInsets.all(12),

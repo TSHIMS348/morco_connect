@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+
 import '../../services/auth_session.dart';
 import 'package:morco_connect/features/audit/services/audit_service.dart';
 import 'package:morco_connect/features/audit/models/audit_action.dart';
@@ -85,12 +86,13 @@ class _OtpFormState extends State<OtpForm> {
 
     // ⏳ Simulation vérification OTP
     await Future.delayed(const Duration(seconds: 2));
-
     if (!mounted) return;
+
     setState(() => _isLoading = false);
 
     // ✅ TRANSITION pending → loggedIn
     await AuthSession.loginFromPending();
+    if (!mounted) return;
 
     AuditService.log(
       AuditAction.otpValidated,
@@ -109,17 +111,6 @@ class _OtpFormState extends State<OtpForm> {
     );
   }
 
-  void _showError(String message) {
-    AuditService.log(
-      AuditAction.otpFailed,
-      description: message,
-    );
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
-  }
-
   @override
   void dispose() {
     _timer?.cancel();
@@ -129,8 +120,8 @@ class _OtpFormState extends State<OtpForm> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false, // ⛔ blocage bouton retour
+    return PopScope(
+      canPop: false, // ⛔ blocage bouton retour (équivalent WillPopScope)
       child: Form(
         key: _formKey,
         child: Column(

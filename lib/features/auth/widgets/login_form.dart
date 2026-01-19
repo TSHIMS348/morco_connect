@@ -38,9 +38,9 @@ class _LoginFormState extends State<LoginForm> {
       password: _passwordController.text,
     );
 
-    setState(() => _isLoading = false);
+    if (!mounted) return;
 
-    if (!context.mounted) return;
+    setState(() => _isLoading = false);
 
     // ❌ ÉCHEC LOGIN
     if (!result.success) {
@@ -122,9 +122,7 @@ class _LoginFormState extends State<LoginForm> {
             validator: (v) =>
                 v == null || v.trim().isEmpty ? 'Champ requis' : null,
           ),
-
           const SizedBox(height: 16),
-
           TextFormField(
             controller: _passwordController,
             obscureText: _obscurePassword,
@@ -137,8 +135,9 @@ class _LoginFormState extends State<LoginForm> {
                       ? Icons.visibility_off
                       : Icons.visibility,
                 ),
-                onPressed: () =>
-                    setState(() => _obscurePassword = !_obscurePassword),
+                onPressed: () => setState(
+                  () => _obscurePassword = !_obscurePassword,
+                ),
               ),
             ),
             validator: (v) =>
@@ -148,9 +147,7 @@ class _LoginFormState extends State<LoginForm> {
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => _submit(),
           ),
-
           const SizedBox(height: 24),
-
           ElevatedButton(
             onPressed: _isLoading ? null : _submit,
             child: _isLoading
